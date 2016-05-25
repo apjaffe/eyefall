@@ -600,13 +600,20 @@ var Vector = Matter.Vector;
                     c.translate(part.position.x, part.position.y); 
                     c.rotate(part.angle);
 
-                    c.drawImage(
-                        texture,
-                        texture.width * -sprite.xOffset * sprite.xScale, 
-                        texture.height * -sprite.yOffset * sprite.yScale, 
-                        texture.width * sprite.xScale, 
-                        texture.height * sprite.yScale
-                    );
+                    try
+                    {
+                      c.drawImage(
+                          texture,
+                          texture.width * -sprite.xOffset * sprite.xScale, 
+                          texture.height * -sprite.yOffset * sprite.yScale, 
+                          texture.width * sprite.xScale, 
+                          texture.height * sprite.yScale
+                      );
+                    }
+                    catch(e)
+                    {
+                      //TODO: Draw placeholder
+                    }
 
                     // revert translation, hopefully faster than save / restore
                     c.rotate(-part.angle);

@@ -99,7 +99,7 @@ function GameState(serverSide)
   
   function randomGround(rng, xx, yy, grx, gry)
   {
-    var textures = ['platform2.png','platform3.png','platform4.png']
+    var textures = ['platform.png','platform2.png','platform3.png','platform4.png']
     var ground2 = Bodies.rectangle(xx + rng() * grx, yy + rng() * gry, 400, 65,
       { 
           isStatic: true,
@@ -134,7 +134,7 @@ function GameState(serverSide)
     {
       return {
         "x": Math.random()*1500,
-        "y": -Math.random()*200+150
+        "y": -Math.random()*150+150
       };
     }
     else
@@ -873,7 +873,14 @@ function Coin(xx, yy, value, id, engine, serverSide)
   function drawCircle(ctx, x, y, radius1, radius2)
   {
     ctx.beginPath();
-    ctx.ellipse(x,y,Math.abs(radius1), radius2,0,0,Math.PI*2);
+    if(ctx.ellipse)
+    {
+      ctx.ellipse(x,y,Math.abs(radius1), radius2,0,0,Math.PI*2);
+    }
+    else
+    {
+      ctx.arc(x,y,Math.max(Math.abs(radius1),2),0,Math.PI*2);
+    }
     ctx.fill();
   }
   //this.texture = "moon_cropped.png";

@@ -1,7 +1,12 @@
-
-var hosts = ["http://ec2-54-200-38-108.us-west-2.compute.amazonaws.com/","http://ec2-54-191-31-178.us-west-2.compute.amazonaws.com/"];
-var host = hosts[Math.floor(Math.random()*hosts.length)];
-
+if(document.location.href.indexOf("localhost")===-1)
+{
+  var hosts = ["http://ec2-54-200-38-108.us-west-2.compute.amazonaws.com/","http://ec2-54-191-31-178.us-west-2.compute.amazonaws.com/"];
+  var host = hosts[Math.floor(Math.random()*hosts.length)];
+}
+else
+{
+  var host = "localhost:5000";
+}
 var socket = io(host);
 
 
@@ -422,7 +427,7 @@ function renderRank()
       var wid1 = ctx.measureText(text1).width;
       ctx.fillText(text1, x - SMALL_ICON_SIZE - 1.5, y + 60);
       var textureN = Render.getTexture(render, "ranks/"+rd.next[1]);
-      ctx.drawImage(textureN,x + wid1/2 - SMALL_ICON_SIZE + 1.5,y + 65 - SMALL_ICON_SIZE*2,SMALL_ICON_SIZE*2,SMALL_ICON_SIZE*2);
+      tryDrawImage(ctx,textureN,x + wid1/2 - SMALL_ICON_SIZE + 1.5,y + 65 - SMALL_ICON_SIZE*2,SMALL_ICON_SIZE*2,SMALL_ICON_SIZE*2);
     }
     else
     {
@@ -432,13 +437,13 @@ function renderRank()
     if(rd.current)
     {
       var texture = Render.getTexture(render, "ranks/"+rd.current[1]);
-      ctx.drawImage(texture,x-ICON_SIZE,y-ICON_SIZE*2-5,ICON_SIZE*2,ICON_SIZE*2);
+      tryDrawImage(ctx,texture,x-ICON_SIZE,y-ICON_SIZE*2-5,ICON_SIZE*2,ICON_SIZE*2);
     }
     var numJumps = pl.getMaxJC();
     for(var i = 0; i < numJumps; i++)
     {
       var cl = Render.getTexture(render, "ranks/cloud-icon.png");
-      ctx.drawImage(cl,x+ICON_SIZE+3,y-ICON_SIZE*0.5-i*(CLOUD_ICON_HEI+2),CLOUD_ICON_WID,CLOUD_ICON_HEI);
+      tryDrawImage(ctx,cl,x+ICON_SIZE+3,y-ICON_SIZE*0.5-i*(CLOUD_ICON_HEI+2),CLOUD_ICON_WID,CLOUD_ICON_HEI);
     }
     
     ctx.globalAlpha = 1;
@@ -492,6 +497,9 @@ function SocketManager()
         keepalive();
       }
     },1000);
+    socket.on('disconnect', function(){
+      alert("Oh no, the connection to the server broke! Please refresh the page.");
+    });
   });
 }
 var socketManager = new SocketManager();
@@ -515,6 +523,26 @@ function preload()
 preload();
 */
 
+function tryDrawImage(ctx, img, x, y, wid, hei)
+{
+  try
+  {
+    if(wid && hei)
+    {
+      ctx.drawImage(img,x,y,wid,hei);
+    }
+    else
+    {
+      ctx.drawImage(img,x,y);
+    }
+  }
+  catch(e)
+  {
+    console.log(e);
+    //TODO: Filler image
+  }
+}
+
 function LoginManager()
 {
   var currentState = "login"; //"login" or "play"
@@ -531,8 +559,9 @@ function LoginManager()
   var CANVAS_WID = 500;
   var CANVAS_HEI = 140;
   var MARGIN = 5;
-  var PLANK_WID = 2048; 
-  var PLANK_SOURCE = "metal_base2.png";
+  var PLANK_WID = 400 * 0.5; 
+  var PLANK_HEI = 65 * 0.5;
+  var PLANK_SOURCE = "platform4.png"
   var ARROW_HEI = 64;
   var ARROW_WID = 100;
   
@@ -622,24 +651,24 @@ function LoginManager()
     var angle = animationTime / ROTATION_PERIOD * Math.PI * 2;
     ctx.translate(CANVAS_WID/2, SKIN_RADIUS+MARGIN); 
     ctx.rotate(angle);
-    ctx.drawImage(texture,-SKIN_RADIUS,-SKIN_RADIUS,SKIN_RADIUS*2,SKIN_RADIUS*2);
+    tryDrawImage(ctx,texture,-SKIN_RADIUS,-SKIN_RADIUS,SKIN_RADIUS*2,SKIN_RADIUS*2);
     ctx.rotate(-angle);
     ctx.translate(-CANVAS_WID/2, -(SKIN_RADIUS+MARGIN));
     
     var texture2 = Render.getTexture(render, PLANK_SOURCE);
     var offset = SKIN_RADIUS * angle;
     var diff = -posmod(offset, PLANK_WID);
-    for(var i = 0; i<2;i++)
+    for(var i = 0; i<4;i++)
     {
-      ctx.drawImage(texture2, diff+PLANK_WID*i, SKIN_RADIUS*2+MARGIN);
+      tryDrawImage(ctx,texture2, diff+PLANK_WID*i, SKIN_RADIUS*2+MARGIN, PLANK_WID, PLANK_HEI);
     }
     
     var right = Render.getTexture(render, "right.png");
     var left = Render.getTexture(render, "left.png");
     var leftOffset = leftDown ? 2 : 0;
     var rightOffset = rightDown ? 2 : 0;
-    ctx.drawImage(right, CANVAS_WID/2 + SKIN_RADIUS + MARGIN*4, SKIN_RADIUS+MARGIN-ARROW_HEI/2 + leftOffset);
-    ctx.drawImage(left, CANVAS_WID/2 - SKIN_RADIUS - MARGIN*4 - ARROW_WID, SKIN_RADIUS+MARGIN-ARROW_HEI/2 + rightOffset);
+    tryDrawImage(ctx,right, CANVAS_WID/2 + SKIN_RADIUS + MARGIN*4, SKIN_RADIUS+MARGIN-ARROW_HEI/2 + leftOffset);
+    tryDrawImage(ctx,left, CANVAS_WID/2 - SKIN_RADIUS - MARGIN*4 - ARROW_WID, SKIN_RADIUS+MARGIN-ARROW_HEI/2 + rightOffset);
   };
 
   this.isPlaying = function()
