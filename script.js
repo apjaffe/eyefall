@@ -1,6 +1,8 @@
 
+var hosts = ["http://ec2-54-200-38-108.us-west-2.compute.amazonaws.com/","http://ec2-54-191-31-178.us-west-2.compute.amazonaws.com/"];
+var host = hosts[Math.floor(Math.random()*hosts.length)];
 
-var socket = io();
+var socket = io(host);
 
 
 var gameState = new GameState(false);
