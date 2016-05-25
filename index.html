@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- http://stackoverflow.com/questions/5023602/facebook-share-link-can-you-customize-the-message-body-text -->
+<!--TODO-->
+<meta name="title" content="Eye Fall" />
+<meta name="description" content="Let the eyes fall" />
+<link rel="image_src" href="A thumbnail you can show" / >
+
+<link rel="manifest" href="manifest.json">
+
+<script src="js/seedrandom.min.js"></script>
+<script src="js/qtree.js"></script>
+<script src="js/jquery-1.12.4.min.js" type="text/javascript"></script>
+<script src="js/matter.min.js" type="text/javascript"></script>
+<script src="js/socket.io-1.4.5.js"></script>
+<script type="text/javascript" src="gamestate.js"></script>
+<script src="custom-render.js" type="text/javascript"></script>
+<link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+<div id="login">
+  <img src="imgs/logo700x350t.png" id="logo"/>
+  <div id="nickbuttons">
+    <input type="text" maxlength="20" id="nickname" placeholder = "Nickname"/>
+    <input type="button" id="playbutton" value="Go" class="button"/>
+  </div>
+  <canvas id="preview" width="500" height="140">
+  </canvas>
+  <div id="tutorial">
+    LEFT AND RIGHT KEYS TO SPIN. SPACE TO JUMP.
+  </div>
+</div>
+<canvas id="mycanvas"></canvas>
+<script type="text/javascript" src="script.js"></script>
+</body>
+</html>
