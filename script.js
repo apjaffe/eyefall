@@ -287,10 +287,15 @@ function renderSplash(inc)
 
 function renderLeaderboard()
 {
-  var ctx = render.context;
-  var ldb = gameState.getLeaderboard();
   var LEADERBOARD_LEFT = 10;
   var LEADERBOARD_RIGHT = 220;
+
+  if(window.innerWidth < LEADERBOARD_RIGHT+320)
+    return;
+    
+  var ctx = render.context;
+  var ldb = gameState.getLeaderboard();
+
   var TEXT_HEIGHT = 25;
   if(ldb!==null)
   {
@@ -298,13 +303,14 @@ function renderLeaderboard()
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'left';
     ctx.font="30px Impact, Charcoal, sans-serif";
-    ctx.fillText("Leaderboard", 10, 30);
+    ctx.fillText("Leaderboard", LEADERBOARD_LEFT, 30);
     
-    ctx.textAlign = 'left';
     ctx.font="20px Impact, Charcoal, sans-serif";
     for(var i = 0; i < ldb.length; i++)
     {
+      ctx.textAlign = 'left';
       ctx.fillText(ldb[i][0], LEADERBOARD_LEFT, 55+i*TEXT_HEIGHT);
+      ctx.textAlign = 'left';
       ctx.fillText(ldb[i][1], LEADERBOARD_RIGHT, 55+i*TEXT_HEIGHT);
     }
     ctx.globalAlpha = 1;
@@ -921,8 +927,15 @@ if(document.location.href.indexOf("localhost")===-1)
   var nocache = Math.random();
   var balancer_ip = "52.40.0.180";
   $.get( "http://" + balancer_ip+"/request?"+nocache, function( host ) {
-    socket = io(host);
-    socketManager = new SocketManager();
+    if(host === "localhost")
+    {
+      alert("Oops, no servers are running right now... This should be a temporary issue, please wait a few seconds and refresh the page.");
+    }
+    else
+    {
+      socket = io(host);
+      socketManager = new SocketManager();
+    }
   });
 }
 else

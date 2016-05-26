@@ -48,13 +48,13 @@ canvas
 }
 #logo
 {
-  width:700px;
-  height:350px;
+  width:600px;
+  height:300px;
   position: absolute;
   top: 50%;
   left: 50%;
 
-  margin: -300px 0 0 -350px;
+  margin: -250px 0 0 -300px;
 }
 /*
 https://css-tricks.com/centering-css-complete-guide/
@@ -138,3 +138,18 @@ https://css-tricks.com/centering-css-complete-guide/
    border-top-color: #1b435e;
    background: #1b435e;
    }
+   
+/*
+ins.adsbygoogle
+{
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background-color:#fff;
+}*/
+@media (max-width: 800px) {
+  ins.adsbygoogle
+  {
+    display:none;
+ }
+}

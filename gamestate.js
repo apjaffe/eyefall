@@ -700,11 +700,11 @@ function GameState(serverSide)
       },
       "a":d[5],
       "k":d[6],
-      "j":d[7],
-      "c":d[8],
-      "jc":d[9],
-      "n":d[10],
-      "s":SKINS[d[11]]
+      //"j":d[7],
+      "c":d[7],
+      "jc":d[8],
+      "n":d[9],
+      "s":SKINS[d[10]]
     };
   };
   
@@ -748,7 +748,7 @@ function GameState(serverSide)
       {
         rtn = true;
       }
-      player.setJump(u.j);
+      //player.setJump(u.j);
       player.setCoins(u.c);
       player.setJumpCount(u.jc);
       player.setNick(u.n);
@@ -1017,7 +1017,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
 
   var RANKS = [
   //[coins, icon, title, double jumps, double jump decay rate]
-    [    0, "helmet.png", "Unranked", 0, 0],
+    [    0, "helmet.png", "Unranked", 1, 0.5],
     [   50, "compass.png","Recruit I", 0, 0],
     [  200, "first-aid-kit.png", "Recruit II", 0, 0],
     [  400, "knife.png","Recruit III",0, 0],
@@ -1303,7 +1303,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
       u.v.y,
       u.a,
       u.k,
-      u.j,
+      //u.j,
       u.c,
       u.jc,
       u.n,
@@ -1320,7 +1320,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
         "v": roundVector(player.composite.velocity),
         "a": roundDecimal(player.composite.angularVelocity),
         "k": gameState.compressKeys(keys),
-        "j": jumpStatus,
+        //"j": jumpStatus,
         "c": coins,
         "jc": jc,
         "n": nickname,
