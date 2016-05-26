@@ -20,6 +20,7 @@ render.options.background = '#000';
 render.options.backgroundImage = '2.jpg';
 render.options.backgroundWidth = 1024;
 render.options.backgroundHeight = 1024;
+render.options.showSleeping = false;
 //render.options.showIds = true;
 
 
@@ -468,7 +469,8 @@ function SocketManager()
       loginManager.gotoPlay();
     });
     socket.on('update', function(updates){
-      var updateRes = gameState.applyUpdates(updates);
+      var u = BISON.decode(updates);
+      var updateRes = gameState.applyUpdates(u);
       if(updateRes)
       {
         //console.log("Race condition averted, sort of!");
@@ -916,8 +918,9 @@ var MAX_INC = 100;
 var socket = null;
 if(document.location.href.indexOf("localhost")===-1)
 {
+  var nocache = Math.random();
   var balancer_ip = "52.40.0.180";
-  $.get( "http://" + balancer_ip+"/request", function( host ) {
+  $.get( "http://" + balancer_ip+"/request?"+nocache, function( host ) {
     socket = io(host);
     socketManager = new SocketManager();
   });

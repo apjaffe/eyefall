@@ -29,6 +29,8 @@ function GameState(serverSide)
   var myPlayerObj = null;
   
   var engine = Engine.create();
+  engine.enableSleeping = true;
+  engine.positionIterations = 4;
   
   var GROUND_SEP = 85;
   var GROUND_RANGE_X = 2000;
@@ -67,9 +69,7 @@ function GameState(serverSide)
   
   var leaderboard = null;
 
-  this.getSkins = function()
-  {
-    return [
+  var SKINS = [
       "ball-100x100s.png",
       "eight_ball.png",
       "iris_small.png",
@@ -97,6 +97,10 @@ function GameState(serverSide)
       "spiral-ball-hi.png",
       "pencil ball.png"
     ];
+  
+  this.getSkins = function()
+  {
+    return SKINS;
   };
   
   function randomGround(rng, xx, yy, grx, gry)
@@ -136,14 +140,14 @@ function GameState(serverSide)
     {
       return {
         "x": Math.random()*1500,
-        "y": -Math.random()*150+150
+        "y": 140
       };
     }
     else
     {
       return {
         "x": NUM_GROUND * GROUND_SEP_X+GROUND_RANGE_X+Math.random()*1500,
-        "y": -Math.random()*200+150
+        "y": 140
       };
     }
   };
@@ -335,13 +339,18 @@ function GameState(serverSide)
     return result;
   }
 
+  var RANDOM_CHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_-=+[]{};\':",./<>?\\|';
   this.newId = function()
   {
-    return randomString(32, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    return randomString(32, RANDOM_CHARS);
   };
   this.smallId = function()
   {
-    return randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    return randomString(16, RANDOM_CHARS);
+  };
+  this.tinyId = function()
+  {
+    return randomString(8, RANDOM_CHARS);
   };
 
   this.getEngine = function()
@@ -655,8 +664,9 @@ function GameState(serverSide)
     return new Date().getTime();
   }
   
-  var MAX_VIS_WID = 3000;
-  var MAX_VIS_HEI = 3000;
+  var MAX_VIS_WID = 2000;
+  var MAX_VIS_HEI = 2000;
+  
   this.getUpdates = function(target)
   {
     var bounds = target.getVisibility(MAX_VIS_WID, MAX_VIS_HEI, true);
@@ -665,7 +675,7 @@ function GameState(serverSide)
     {
       if(Bounds.overlaps(players[i].composite.bounds, bounds))
       {
-        rtn.push(players[i].getData());
+        rtn.push(players[i].getCData());
       }
     }
     return {
@@ -675,6 +685,29 @@ function GameState(serverSide)
   };
   var OLD_POS_WEIGHT = 0.9;
   var NEW_POS_WEIGHT = 1-OLD_POS_WEIGHT;
+  
+  function uncompressData(d)
+  {
+    return {
+      "id": d[0],
+      "p":{
+        "x":d[1],
+        "y":d[2]
+      },
+      "v":{
+        "x":d[3],
+        "y":d[4],
+      },
+      "a":d[5],
+      "k":d[6],
+      "j":d[7],
+      "c":d[8],
+      "jc":d[9],
+      "n":d[10],
+      "s":SKINS[d[11]]
+    };
+  };
+  
   //returns true if the server tried to correct the keys on our own player!
   this.applyUpdates = function(updatesObj)
   {
@@ -690,34 +723,35 @@ function GameState(serverSide)
     var playerIds = {};
     for(var i = 0; i < updates.length; i++)
     {
-      playerIds[updates[i].id] = true;
-      var player = this.getPlayer(updates[i].id);
+      var u = uncompressData(updates[i]);
+      playerIds[u.id] = true;
+      var player = this.getPlayer(u.id);
       if(player === null)
       {
         //TODO: Do this, handling isMine properly
         this.spawnPlayer({
-          "x":updates[i].p.x,
-          "y":updates[i].p.y,
-          "id":updates[i].id,
+          "x":u.p.x,
+          "y":u.p.y,
+          "id":u.id,
           "isMine":false,
-          "skin":updates[i].s
+          "skin":u.s
         });
         continue;
       }
-      var avgPos = Vector.add(Vector.mult(player.composite.position,OLD_POS_WEIGHT), Vector.mult(updates[i].p,NEW_POS_WEIGHT));
+      var avgPos = Vector.add(Vector.mult(player.composite.position,OLD_POS_WEIGHT), Vector.mult(u.p,NEW_POS_WEIGHT));
       Body.setPosition(player.composite,avgPos);
       //Body.setAngle(player.composite,updates[i].angle);
-      Body.setVelocity(player.composite,updates[i].v);
-      Body.setAngularVelocity(player.composite,updates[i].a);
-      var res = player.setKeys(updates[i].k);
+      Body.setVelocity(player.composite,u.v);
+      Body.setAngularVelocity(player.composite,u.a);
+      var res = player.setKeys(u.k);
       if(res && player === this.myPlayer())
       {
         rtn = true;
       }
-      player.setJump(updates[i].j);
-      player.setCoins(updates[i].c);
-      player.setJumpCount(updates[i].jc);
-      player.setNick(updates[i].n);
+      player.setJump(u.j);
+      player.setCoins(u.c);
+      player.setJumpCount(u.jc);
+      player.setNick(u.n);
     }
     for(var i = 0; i < players.length; i++)
     {
@@ -949,6 +983,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
   this.id = id;
   this.alive = true;
   var that = this;
+  var skinNum = gameState.getSkins().indexOf(skin);
   var RADIUS = 50;
   var JUMPER_RADIUS = 5;
   var JUMPER_OFFSET = RADIUS - JUMPER_RADIUS*2;
@@ -1138,7 +1173,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
   {
     return rankData(coins);
   };
-  
+  var MAX_NICK_WIDTH = 250;
   this.getNickObj = function()
   {
     if(nickname === null || !this.composite)
@@ -1152,7 +1187,17 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
       "x": this.composite.position.x,
       "y": this.composite.position.y - RADIUS - 3,
       "text": nickname,
-      "opacity": 0.7
+      "opacity": 0.7,
+      "getBounds": function(){return {
+        "min":{
+          "x": that.composite.position.x - MAX_NICK_WIDTH,
+          "y": that.composite.position.y - RADIUS - 23
+        },
+        "max":{
+          "x": that.composite.position.x + MAX_NICK_WIDTH,
+          "y": that.composite.position.y - RADIUS +17
+        }
+      }}
     };
   }
   
@@ -1247,6 +1292,24 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
     };
   }
   
+  this.getCData = function()
+  {
+    var u = this.getData();
+    return [
+      u.id,
+      u.p.x,
+      u.p.y,
+      u.v.x,
+      u.v.y,
+      u.a,
+      u.k,
+      u.j,
+      u.c,
+      u.jc,
+      u.n,
+      skinNum
+    ];
+  };
   this.getData = function()
   { 
     var player = this;

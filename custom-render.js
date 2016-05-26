@@ -189,10 +189,10 @@ var Vector = Matter.Vector;
             _applyBackground(render, background);
 
         // clear the canvas with a transparent fill, to allow the canvas background to show
-        context.globalCompositeOperation = 'source-in';
-        context.fillStyle = "transparent";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.globalCompositeOperation = 'source-over';
+        //context.globalCompositeOperation = 'source-in';
+        //context.fillStyle = "transparent";
+        //context.fillRect(0, 0, canvas.width, canvas.height);
+        //context.globalCompositeOperation = 'source-over';
 
         // handle bounds
         if (options.hasBounds) {
@@ -466,40 +466,36 @@ var Vector = Matter.Vector;
       for(var i = 0; i < objs.length; i++)
       {
         var o = objs[i];
-        //TODO: test bounds first
-        if(o.text)
+        if(o.getRenderBounds)
         {
-          c.globalAlpha = o.opacity || 1;
-          c.font = o.font;
-          if(o.textAlign)
-          {
-            c.textAlign = o.textAlign;
-          }
-          if(o.fillStyle)
-          {
-            c.fillStyle = o.fillStyle;
-          }
-          c.fillText(o.text, o.x, o.y)
+          var bounds = o.getRenderBounds(render.options.spinTime, c);
         }
-        if(o.renderFn)
+        else
         {
           var bounds = o.getBounds();
-          if(Bounds.overlaps(bounds, render.bounds))
-          {
-            o.renderFn(render.options.spinTime, c);
-          }
         }
-        if(o.texture) 
-        {
-          if(o.getRenderBounds)
+        if(Bounds.overlaps(bounds, render.bounds))
+        { 
+          if(o.text)
           {
-            var bounds = o.getRenderBounds(render.options.spinTime, c);
+            c.globalAlpha = o.opacity || 1;
+            c.font = o.font;
+            if(o.textAlign)
+            {
+              c.textAlign = o.textAlign;
+            }
+            if(o.fillStyle)
+            {
+              c.fillStyle = o.fillStyle;
+            }
+            c.fillText(o.text, o.x, o.y)
           }
-          else
+          if(o.renderFn)
           {
             var bounds = o.getBounds();
+            o.renderFn(render.options.spinTime, c);
           }
-          if(Bounds.overlaps(bounds, render.bounds))
+          if(o.texture) 
           {
             c.globalAlpha = o.opacity || 1;
             var texture = _getTexture(render, o.texture);
@@ -538,17 +534,20 @@ var Vector = Matter.Vector;
         
         var texture = _getTexture(render, options.backgroundImage);
 
-        for(var xx = minx; xx <= maxx; xx += options.backgroundWidth)
+        if(texture.loaded)
         {
-          for(var yy = miny; yy <= maxy; yy += options.backgroundHeight)
+          for(var xx = minx; xx <= maxx; xx += options.backgroundWidth)
           {
-            c.drawImage(
-                texture,
-                xx, 
-                yy, 
-                options.backgroundWidth, 
-                options.backgroundHeight
-            );
+            for(var yy = miny; yy <= maxy; yy += options.backgroundHeight)
+            {
+              c.drawImage(
+                  texture,
+                  xx, 
+                  yy, 
+                  options.backgroundWidth, 
+                  options.backgroundHeight
+              );
+            }
           }
         }
         // revert translation, hopefully faster than save / restore
