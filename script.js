@@ -1,13 +1,3 @@
-if(document.location.href.indexOf("localhost")===-1)
-{
-  var hosts = ["http://ec2-54-200-38-108.us-west-2.compute.amazonaws.com/","http://ec2-54-191-31-178.us-west-2.compute.amazonaws.com/"];
-  var host = hosts[Math.floor(Math.random()*hosts.length)];
-}
-else
-{
-  var host = "localhost:5000";
-}
-var socket = io(host);
 
 
 var gameState = new GameState(false);
@@ -196,7 +186,7 @@ Keys = {
     if(Keys.pressed[keyStr] !== value)
     {
       Keys.pressed[keyStr] = value;
-      if(loginManager.isPlaying())
+      if(loginManager.isPlaying() && socket)
       {
         socket.emit("key",gameState.compressKeys(Keys.pressed));
       }
@@ -456,18 +446,30 @@ function SocketManager()
   var password = gameState.newId();
   function keepalive()
   {
-    socket.emit("keepalive",{
-      "p": password
-    });
+    if(socket)
+    {
+      socket.emit("keepalive",{
+        "p": password
+      });
+    }
   }
   this.respawn = function(nickname)
   {
-    socket.emit("keepalive",{
-      "p": password,
-      "nick": nickname,
-      "respawn": true,
-      "skin": loginManager.getSkin()
-    });
+    if(socket)
+    {
+      socket.emit("keepalive",{
+        "p": password,
+        "nick": nickname,
+        "respawn": true,
+        "skin": loginManager.getSkin()
+      });
+    }
+    else
+    {
+      setTimeout(function(){
+        this.respawn(nickname);
+      },200);
+    }
   };
   socket.on('connect', function () {
     socket.on('spawn', function(msg){
@@ -502,7 +504,7 @@ function SocketManager()
     });
   });
 }
-var socketManager = new SocketManager();
+var socketManager; 
 
 /*
 //TODO dead code
@@ -709,7 +711,6 @@ function LoginManager()
 var loginManager = new LoginManager();
 loginManager.gotoLogin();
 
-//TODO: might accidentally respawn before we're ready, if we don't realize yet that we're dead and we send a keepalive
 
 /**
  START BOT
@@ -911,3 +912,20 @@ var MAX_INC = 100;
   }
   old = timestamp;
 })();
+
+var socket = null;
+if(document.location.href.indexOf("localhost")===-1)
+{
+  var balancer_ip = "52.40.0.180";
+  $.get( "http://" + balancer_ip+"/request", function( host ) {
+    socket = io(host);
+    console.log(host);
+    socketManager = new SocketManager();
+  });
+}
+else
+{
+  socket = io();
+  socketManager = new SocketManager();
+}
+

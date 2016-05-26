@@ -93,7 +93,9 @@ function GameState(serverSide)
       "mars.png",
       "venus.png",
       "jupiter.png",
-	  "flags.png"
+      "flags.png",
+      "spiral-ball-hi.png",
+      "pencil ball.png"
     ];
   };
   
