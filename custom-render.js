@@ -600,19 +600,42 @@ var Vector = Matter.Vector;
                     c.translate(part.position.x, part.position.y); 
                     c.rotate(part.angle);
 
+                    var succeeded = false;
                     try
                     {
-                      c.drawImage(
-                          texture,
-                          texture.width * -sprite.xOffset * sprite.xScale, 
-                          texture.height * -sprite.yOffset * sprite.yScale, 
-                          texture.width * sprite.xScale, 
-                          texture.height * sprite.yScale
-                      );
+                      if(texture.loaded)
+                      {
+                        c.drawImage(
+                            texture,
+                            texture.width * -sprite.xOffset * sprite.xScale, 
+                            texture.height * -sprite.yOffset * sprite.yScale, 
+                            texture.width * sprite.xScale, 
+                            texture.height * sprite.yScale
+                        );
+                        succeeded = true;
+                      }
                     }
                     catch(e)
                     {
-                      //TODO: Draw placeholder
+                    }
+                    if(!succeeded)
+                    {
+                      if(Math.abs(texture.width - texture.height) < 10) //circular-ish
+                      {
+                        c.strokeStyle = 'rgba(255,255,255,0.8)';
+                        c.lineWidth = 3;
+                        c.beginPath();
+                        c.arc(0,0,texture.width * sprite.xOffset * sprite.xScale,0,Math.PI*2);
+                        c.stroke();
+                      }
+                      else
+                      {
+                        c.fillStyle = 'rgba(255,255,255,0.8)';
+                        c.fillRect(texture.width * -sprite.xOffset * sprite.xScale, 
+                            texture.height * -sprite.yOffset * sprite.yScale, 
+                            texture.width * sprite.xScale, 
+                            texture.height * sprite.yScale);
+                      }
                     }
 
                     // revert translation, hopefully faster than save / restore
@@ -1317,6 +1340,9 @@ var Vector = Matter.Vector;
 
         image = render.textures[imagePath] = new Image();
         image.src = "imgs/"+imagePath;
+        image.onload = function(){
+          image.loaded = true;
+        };
 
         return image;
     };

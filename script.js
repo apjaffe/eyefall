@@ -455,21 +455,12 @@ function SocketManager()
   }
   this.respawn = function(nickname)
   {
-    if(socket)
-    {
-      socket.emit("keepalive",{
-        "p": password,
-        "nick": nickname,
-        "respawn": true,
-        "skin": loginManager.getSkin()
-      });
-    }
-    else
-    {
-      setTimeout(function(){
-        this.respawn(nickname);
-      },200);
-    }
+    socket.emit("keepalive",{
+      "p": password,
+      "nick": nickname,
+      "respawn": true,
+      "skin": loginManager.getSkin()
+    });
   };
   socket.on('connect', function () {
     socket.on('spawn', function(msg){
@@ -684,7 +675,16 @@ function LoginManager()
   
   this.triggerRespawn=function()
   {
-    socketManager.respawn(document.getElementById("nickname").value);
+    if(socketManager)
+    {
+      socketManager.respawn(document.getElementById("nickname").value);
+    }
+    else
+    {
+      setTimeout(function(){
+        that.triggerRespawn();
+      },200);
+    }
   }
   
   document.getElementById("playbutton").onclick = function(){
@@ -919,7 +919,6 @@ if(document.location.href.indexOf("localhost")===-1)
   var balancer_ip = "52.40.0.180";
   $.get( "http://" + balancer_ip+"/request", function( host ) {
     socket = io(host);
-    console.log(host);
     socketManager = new SocketManager();
   });
 }
