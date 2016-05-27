@@ -6,6 +6,7 @@ input[type="text"] {
   appearance: none;
   box-shadow: none;
   border-radius: none;
+  cursor: text;
 }
 input[type="text"]:focus {
   outline: none;
@@ -27,7 +28,22 @@ body
   margin:0;
   padding:0;
   background-color:#000;
+
+  -webkit-user-select: none;
+     -moz-user-select: -moz-none;
+      -ms-user-select: none;
+          user-select: none;
+  cursor: default;
 }
+input,
+textarea {
+     -moz-user-select: text;
+}
+a
+{
+  cursor: pointer;
+}
+
 canvas
 {
   margin:0;
@@ -68,7 +84,7 @@ https://css-tricks.com/centering-css-complete-guide/
   top: 50%;
   left: 50%;
 
-  margin: 75px 0 0 -265px;
+  margin: 55px 0 0 -265px;
 }
 #playbutton
 {
@@ -87,8 +103,25 @@ https://css-tricks.com/centering-css-complete-guide/
   top: 50%;
   left: 50%;
 
-  margin: 150px 0 0 -250px;
+  margin: 120px 0 0 -250px;
   background:transparent;
+}
+#thanks
+{
+  width: 400px;
+  height: 400px;
+  
+  text-align:center;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  margin: 100px 0 0 -200px;
+  
+  color: #BBB;
+  font-size: 20px;
+  font-family: Impact, Charcoal, sans-serif;
 }
 #tutorial
 {
@@ -101,11 +134,11 @@ https://css-tricks.com/centering-css-complete-guide/
   top: 50%;
   left: 50%;
 
-  margin: 310px 0 0 -300px;
+  margin: 260px 0 0 -300px;
   
   color: white;
-  font-size: 24px;
- font-family: Impact, Charcoal, sans-serif;
+  font-size: 22px;
+  font-family: Impact, Charcoal, sans-serif;
 }
 .button {
    border-top: 1px solid #96d1f8;
@@ -138,7 +171,28 @@ https://css-tricks.com/centering-css-complete-guide/
    border-top-color: #1b435e;
    background: #1b435e;
    }
-   
+#share   
+{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  width:230px;
+  color: #AAA;
+  font-size: 19px;
+  font-family: Impact, Charcoal, sans-serif;
+}
+#fbshare, #twshare, #pshare
+{
+  text-decoration: none;
+  color: #FFF;
+  font-size: 21px;
+}
+#return
+{
+  text-decoration: none;
+  color: #FFF;
+  font-size: 24px;
+}
 /*
 ins.adsbygoogle
 {

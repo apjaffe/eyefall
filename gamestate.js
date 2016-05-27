@@ -71,28 +71,34 @@ function GameState(serverSide)
 
   var SKINS = [
       "ball-100x100s.png",
-      "eight_ball.png",
       "iris_small.png",
-      "beach_ball.png",
-      //"spikes.png",
-      "blue.png",
-      "red.png",
-      "green.png",
-      "purple.png",
-      "seagreen.png",
-      "yellow.png",
-      "orange.png",
-      "soccer.png",
-      "smiling.png",
-      "crying.png",
+      
       "neon.png",
       "alien.png",
       "neon2.png",
+      
+      "red.png",
+      "orange.png",
+      "yellow.png",
+      "seagreen.png",
+      "green.png",
+      "blue.png",
+      "purple.png",
+      
       "moon.png",
-      "earth.png",
       "mars.png",
       "venus.png",
+      "earth.png",
       "jupiter.png",
+      
+      "smiling.png",
+      "crying.png",
+      
+      "eight_ball.png",
+      
+      "beach_ball.png",
+      "soccer.png",
+      
       "flags.png",
       "spiral-ball-hi.png",
       "pencil ball.png"
@@ -340,9 +346,10 @@ function GameState(serverSide)
   }
 
   var RANDOM_CHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_-=+[]{};\':",./<>?\\|';
+  var BASIC_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   this.newId = function()
   {
-    return randomString(32, RANDOM_CHARS);
+    return randomString(32, BASIC_CHARS);
   };
   this.smallId = function()
   {
@@ -669,11 +676,15 @@ function GameState(serverSide)
   
   this.getUpdates = function(target)
   {
+    if(!target.alive)
+    {
+      return [];
+    }
     var bounds = target.getVisibility(MAX_VIS_WID, MAX_VIS_HEI, true);
     var rtn = [];
     for(var i = 0; i < players.length; i++)
     {
-      if(Bounds.overlaps(players[i].composite.bounds, bounds))
+      if(players[i].alive && Bounds.overlaps(players[i].composite.bounds, bounds))
       {
         rtn.push(players[i].getCData());
       }
@@ -1017,7 +1028,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
 
   var RANKS = [
   //[coins, icon, title, double jumps, double jump decay rate]
-    [    0, "helmet.png", "Unranked", 1, 0.5],
+    [    0, "helmet.png", "Unranked", 0, 0],
     [   50, "compass.png","Recruit I", 0, 0],
     [  200, "first-aid-kit.png", "Recruit II", 0, 0],
     [  400, "knife.png","Recruit III",0, 0],
@@ -1038,7 +1049,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
     [100000, "insignia-1.png", "Major",3,0.63], //??
     [150000, "insignia.png", "General I",3,0.64], //general
     [200000, "star.png", "General II",4,0.64]
-    ,[1000000, "flag.png", "CHEATER",100,1.0]
+    //,[1000000, "flag.png", "CHEATER",100,1.0]
   ];//TODO: King
 
   /**

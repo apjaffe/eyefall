@@ -493,10 +493,7 @@ function SocketManager()
       gameState.setLeaderboard(ldb);
     });
     setInterval(function(){
-      if(nickname !== null)
-      {
-        keepalive();
-      }
+      keepalive();
     },1000);
     socket.on('disconnect', function(){
       alert("Oh no, the connection to the server broke! Please refresh the page.");
@@ -619,12 +616,29 @@ function LoginManager()
       rightDown = true;
     }
   });
+  $("#fbshare, #twshare").click(function(e){
+    Cookies.set('shared','true',{ expires: 36500 });
+  });
 
 
-  
+  var NUM_FREE = 2;
+  var NUM_SHARED = 25;
+  var PAID_HASH = "d2d91b3e2948b6ef087b19f06cfc3fb8";
   this.numAccessibleSkins = function()
   {
-    return SKINS.length;
+    //coming soon, hopefully!
+    //if(md5(Cookies.get('paid')) === PAID_HASH) 
+    //{
+    //  return SKINS.length;
+    //}
+    if(Cookies.get('shared') === 'true')
+    {
+      return NUM_SHARED;
+    }
+    else
+    {
+      return NUM_FREE;
+    }
   };
   
   this.getSkin = function()
