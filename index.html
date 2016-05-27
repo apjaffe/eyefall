@@ -6,7 +6,10 @@
 <meta name="title" content="Eye Fall" />
 <meta name="description" content="Let the eyes fall" />
 <link rel="image_src" href="http://eyefall.me/imgs/ball-square.png" / >
-<meta property="og:image"content="http://eyefall.me/imgs/logo700x350.png" />
+<meta property="og:title" content="Eye Fall" />
+<meta property="og:description" content="Let the eyes fall" />
+<meta property="og:image" content="http://eyefall.me/imgs/logo700x350.png" />
+<meta property="fb:app_id" content="202575536802673" />
 <meta name="keywords" content="Realtime,Multiplayer,Physics,Game">
 
 <link rel="manifest" href="manifest.json">
@@ -30,7 +33,7 @@
 
 <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
-<body>
+<body class="noselect">
 <div id="login">
   <img src="imgs/logo700x350t.png" id="logo"/>
   <div id="nickbuttons">
@@ -47,6 +50,13 @@
   <a id="fbshare" href='https://www.facebook.com/sharer/sharer.php?u=http://eyefall.me' target="_blank">Facebook</a> or 
   <a id="twshare" href='https://twitter.com/intent/tweet?status=Playing%20this%20new%20game%20http%3A%2F%2Feyefall.me%20%23eyefall' target="_blank">Twitter</a> to unlock more skins!
   </div>
+  <div id="info">
+  <a href='mailto:eyefall.me@gmail.com' class='link'>Contact</a>
+  <a href='/credits.html' class='link'>Credits</a>
+  <a href='/tos.html' class='link'>Terms of Service</a>
+  <div class="fb-like" data-href="http://eyefall.me" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
+  </div>
+  
   <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
   <!-- Responsive -->
   <ins class="adsbygoogle"
@@ -56,6 +66,23 @@
        data-ad-format="auto"></ins>
   <script>
   (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+  <script>
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '202575536802673',
+        xfbml      : true,
+        version    : 'v2.6'
+      });
+    };
+
+    (function(d, s, id){
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) {return;}
+       js = d.createElement(s); js.id = id;
+       js.src = "//connect.facebook.net/en_US/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+     }(document, 'script', 'facebook-jssdk'));
   </script>
 </div>
 <canvas id="mycanvas"></canvas>
