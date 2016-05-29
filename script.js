@@ -101,15 +101,17 @@ Keys = {
         }  
       }
     });*/
-    el.addEventListener("touchstart", function(evt){
+    var mycanvas = document.getElementById("mycanvas");
+    mycanvas.addEventListener("touchstart", function(evt){
       evt.preventDefault();
       Keys.touchCount += evt.changedTouches.length;
       Keys.directKeyEvent("32", true);
       
+      /*
       if(!Keys.triedFullscreen)
       {
         Keys.triedFullscreen = true;
-        var elem = document.getElementsByTagName("canvas")[0];
+        var elem = document.getElementById("wrapper"); //getElementsByTagName("canvas")[0]
         if(elem.requestFullscreen){
           elem.requestFullscreen();
         }
@@ -122,9 +124,10 @@ Keys = {
         else if(elem.webkitRequestFullscreen){
           elem.webkitRequestFullscreen();
         }
-      }
+        screen.orientation.lock('portrait');
+      }*/
     },false);
-    el.addEventListener("touchend", function(evt){
+    mycanvas.addEventListener("touchend", function(evt){
       evt.preventDefault();
       Keys.touchCount -= evt.changedTouches.length;
       if(Keys.touchCount <= 0)
@@ -132,7 +135,7 @@ Keys = {
         Keys.directKeyEvent("32", false);
       }
     },false);
-    el.addEventListener("touchcancel", function(evt){
+    mycanvas.addEventListener("touchcancel", function(evt){
       evt.preventDefault();
       Keys.touchCount -= evt.changedTouches.length;
       if(Keys.touchCount <= 0)
@@ -151,7 +154,7 @@ Keys = {
         var tiltFB = eventData.beta;
 
         // alpha is the compass direction the device is facing in degrees
-        var dir = eventData.alpha
+        var dir = eventData.alpha;
 
         var tilt;
         if(window.innerWidth > window.innerHeight)
@@ -296,10 +299,14 @@ function renderLeaderboard()
   var ctx = render.context;
   var ldb = gameState.getLeaderboard();
 
+  var pl = gameState.myPlayer();
+  var myId = pl ? pl.id : null;
+  
   var TEXT_HEIGHT = 25;
+  var ALPHA = 0.7;
   if(ldb!==null)
   {
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = ALPHA;
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'left';
     ctx.font="30px Impact, Charcoal, sans-serif";
@@ -308,10 +315,19 @@ function renderLeaderboard()
     ctx.font="20px Impact, Charcoal, sans-serif";
     for(var i = 0; i < ldb.length; i++)
     {
-      ctx.textAlign = 'left';
+      if(ldb[i][2] == myId)
+      {
+        ctx.globalAlpha = 1.0;
+      }
+      else
+      {
+        ctx.globalAlpha = ALPHA;
+      }
+    
+      //ctx.textAlign = 'left';
       ctx.fillText(ldb[i][0], LEADERBOARD_LEFT, 55+i*TEXT_HEIGHT);
-      ctx.textAlign = 'left';
-      ctx.fillText(ldb[i][1], LEADERBOARD_RIGHT, 55+i*TEXT_HEIGHT);
+      //ctx.textAlign = 'left';
+      ctx.fillText(ldb[i][1], LEADERBOARD_RIGHT, 55+i*TEXT_HEIGHT); 
     }
     ctx.globalAlpha = 1;
   }
@@ -475,8 +491,22 @@ function SocketManager()
       loginManager.gotoPlay();
     });
     socket.on('update', function(updates){
-      var u = BISON.decode(updates);
-      var updateRes = gameState.applyUpdates(u);
+      var u = fulldecode(updates);
+      var updateRes = gameState.applyUpdates(u,true);
+      //if(Math.random()<0.01) console.log("other",updates, u); TODO
+      if(updateRes)
+      {
+        //console.log("Race condition averted, sort of!");
+        socket.emit("key",gameState.compressKeys(Keys.pressed));
+      }
+    });
+    function fulldecode(u)
+    {
+      return msgpack.decode(gameState.decodeArray(u));
+    }
+    socket.on('supdate', function(updates){ //self updates
+      var u = fulldecode(updates);
+      var updateRes = gameState.applyUpdates(u,false);
       if(updateRes)
       {
         //console.log("Race condition averted, sort of!");
@@ -484,7 +514,8 @@ function SocketManager()
       }
     });
     socket.on('coins', function(coins){
-      gameState.applyCoins(coins);
+      var c = fulldecode(coins);
+      gameState.applyCoins(c);
     });
     socket.on('coindelta', function(coins){
       gameState.applyCoinDelta(coins);
@@ -495,7 +526,7 @@ function SocketManager()
     setInterval(function(){
       keepalive();
     },1000);
-    socket.on('disconnect', function(){
+    socket.on('reconnect_failed', function(){
       alert("Oh no, the connection to the server broke! Please refresh the page.");
     });
   });
@@ -589,22 +620,20 @@ function LoginManager()
   }
   
   $(canvas).mouseup(function(e){
-    if(leftDown)
-    {
-      that.nextSkin();
-    }
-    else if(rightDown)
-    {
-      that.prevSkin();
-    }
-    leftDown = false;
-    rightDown = false;
+    handleUnclick();
   });
   //http://stackoverflow.com/questions/14651306/get-mouse-position-within-div
   $(canvas).mousedown(function(e){
+    var x = e.pageX;
+    var y = e.pageY;
+    handleClick(x,y);
+  });
+  
+  function handleClick(x,y)
+  {
     var offset = $(canvas).offset();
-    var x = e.pageX - offset.left;
-    var y = e.pageY - offset.top;
+    x -= offset.left;
+    y -= offset.top;
     if(x > CANVAS_WID/2 + SKIN_RADIUS)
     {
       leftDown = true;
@@ -615,7 +644,48 @@ function LoginManager()
       leftDown = false;
       rightDown = true;
     }
+  }
+  
+  function handleUnclick()
+  {
+    if(leftDown)
+    {
+      that.nextSkin();
+    }
+    else if(rightDown)
+    {
+      that.prevSkin();
+    }
+    leftDown = false;
+    rightDown = false;
+  }
+  
+  canvas.addEventListener("touchstart", function(evt){
+      evt.preventDefault();
+      if(evt.changedTouches.length > 0)
+      {
+        var touch = evt.changedTouches[0];
+        handleClick(touch.pageX, touch.pageY);
+      }
   });
+  canvas.addEventListener("touchend",
+  function(evt){
+    evt.preventDefault();
+    if(evt.changedTouches.length > 0)
+    {
+      handleUnclick();
+    }
+  });
+  canvas.addEventListener("touchcancel",
+  function(evt){
+    evt.preventDefault();
+    if(evt.changedTouches.length > 0)
+    {
+      leftDown = false;
+      rightDown = false;
+    }
+  });
+  
   $("#fbshare, #twshare").click(function(e){
     Cookies.set('shared','true',{ expires: 36500 });
   });
@@ -709,9 +779,9 @@ function LoginManager()
     }
   }
   
-  document.getElementById("playbutton").onclick = function(){
+  $("#playbutton").click(function(){
     that.triggerRespawn();
-  };
+  });
   
   this.gotoLogin=function()
   {
@@ -738,6 +808,8 @@ loginManager.gotoLogin();
  START BOT
  **/
 var botNodes = null;
+var NODE_THRESHOLD_X = 500;
+var NODE_THRESHOLD_Y = 500;
 function closestNode(nodes, pos)
 {
   var npos = Vector.neg(pos);
@@ -745,11 +817,13 @@ function closestNode(nodes, pos)
   var bestDist = null;
   for(var i = 0; i < nodes.length; i++)
   {
-    var dlt = Math.abs(Vector.add(nodes[i].pos,npos).y);
-    if(bestDist === null || dlt < bestDist)
+    var dlt = Vector.add(nodes[i].pos,npos);
+    var dlty = Math.abs(dlt.y);
+    var dltx = Math.abs(dlt.x);
+    if((bestDist === null || dlty < bestDist) && dltx < NODE_THRESHOLD_X)
     {
       bestNode = nodes[i];
-      bestDist = dlt;
+      bestDist = dlty;
     }
   }
   return bestNode;
@@ -766,6 +840,7 @@ function doBot(nodes)
   
   var TINY_VEL = 0.2;
   var SMALL_VEL = 0.7;
+  var MINI_VEL = 0.1;
   var DELTA = 0.1;
   var SMALL_DIST = 10;
   
@@ -792,9 +867,13 @@ function doBot(nodes)
     }
   }
   
+  if(currentNode.pos.y < pl.composite.position.y - NODE_THRESHOLD_Y)
+  {
+    currentNode = null; //fell
+  }
   
   //console.log(currentSpot, currentNode, currentIdx);
-  if(currentSpot < 0)
+  if(currentSpot < 0 && currentNode !== null)
   {
     var pos = currentNode.posl[currentIdx];
     var wantRight = pl.composite.position.x < pos.x - SMALL_DIST;
@@ -844,7 +923,7 @@ function doBot(nodes)
       });
     }
   }
-  if(currentSpot >=0)
+  if(currentSpot >=0 && currentNode !== null)
   {  
     if(currentSpot < currentNode.seqs[currentIdx].length)
     {
@@ -852,7 +931,7 @@ function doBot(nodes)
       var ks = gameState.uncompressKeys(cur[1]);
       pressKeys(ks);
       currentDist += pl.composite.speed;
-      if(currentSpot === currentNode.seqs[currentIdx].length - 1 || currentDist > currentNode.seqs[currentIdx][currentSpot+1][0])
+      if(currentSpot === currentNode.seqs[currentIdx].length - 1 || currentDist > currentNode.seqs[currentIdx][currentSpot+1][0] || (pl.composite.speed < MINI_VEL))
       {
         currentSpot++;
       }
@@ -936,7 +1015,7 @@ var MAX_INC = 100;
 })();
 
 var socket = null;
-if(document.location.href.indexOf("localhost")===-1)
+if(document.location.port !== "5000")
 {
   var nocache = Math.random();
   var balancer_ip = "52.40.0.180";

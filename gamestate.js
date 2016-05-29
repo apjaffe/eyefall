@@ -30,7 +30,9 @@ function GameState(serverSide)
   
   var engine = Engine.create();
   engine.enableSleeping = true;
-  engine.positionIterations = 4;
+  engine.positionIterations = 2;
+  engine.velocityIterations = 1;
+  engine.constraintIterations = 0;
   
   var GROUND_SEP = 85;
   var GROUND_RANGE_X = 2000;
@@ -158,7 +160,26 @@ function GameState(serverSide)
     }
   };
   
-   var SPECIAL_KEYS = [
+  this.encodeArray = function(arr)
+  {
+    var out = "";
+    for(var i = 0; i < arr.length; i++)
+    {
+      out += String.fromCharCode(arr[i]);
+    }
+    return out;
+  };
+  this.decodeArray = function(str)
+  {
+    var out = [];
+    for(var i = 0; i < str.length; i++)
+    {
+      out.push(str.charCodeAt(i));
+    }
+    return out;
+  }
+  
+  var SPECIAL_KEYS = [
     "37", "39", "32"
   ];
   this.compressKeys = function(keys)
@@ -216,7 +237,7 @@ function GameState(serverSide)
                       yScale: 4
                   }
               },
-      friction: 0.8
+      friction: 0.9
     };
     var groundOpt2 = { 
       isStatic: true,
@@ -228,7 +249,7 @@ function GameState(serverSide)
                       yScale: 4
                   }
               },
-      friction: 0.8
+      friction: 0.9
     };
   
     var ground = Bodies.circle(892, 1900, 1338, groundOpt1, 20);
@@ -315,7 +336,7 @@ function GameState(serverSide)
       var ld = [];
       for(var i = 0; i < players.length; i++)
       {
-        ld.push([players[i].getNick(), players[i].getCoins()]);
+        ld.push([players[i].getNick(), players[i].getCoins(), players[i].id]);
       }
       function cmp(a, b) 
       {
@@ -345,7 +366,11 @@ function GameState(serverSide)
     return result;
   }
 
-  var RANDOM_CHARS='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_-=+[]{};\':",./<>?\\|';
+  var RANDOM_CHARS="";
+  for(var i = 0; i < 255; i++)
+  {
+    RANDOM_CHARS += String.fromCharCode(i);
+  }  //'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_-=+[]{};\':",./<>?\\|';
   var BASIC_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   this.newId = function()
   {
@@ -490,7 +515,7 @@ function GameState(serverSide)
   };
   this.spawnCoin = function(x,y,value,ignoreCollision)
   {
-      var id = this.smallId();
+      var id = this.tinyId();
       var coin = new Coin(x, y, value, id, engine, serverSide);
       var collisions = ignoreCollision || Query.region(grounds, coin.getBounds());
       if(ignoreCollision || collisions.length == 0) 
@@ -645,20 +670,30 @@ function GameState(serverSide)
       return null;
     }
   };
+  this.uncompressCoin = function(arr)
+  {
+    return {
+      "x": int2float(arr[0]),
+      "y":  int2float(arr[1]),
+      "val": arr[2],
+      "id": arr[3]
+    }
+  }
   this.applyCoins = function(coinData)
   {
     coins.clear();
     for(var i = 0; i < coinData.length; i++)
     {
-      coins.put(new Coin(coinData[i].position.x, coinData[i].position.y, coinData[i].value, coinData[i].id, engine, serverSide));
+      var c = this.uncompressCoin(coinData[i]);
+      coins.put(new Coin(c.x, c.y, c.val, c.id, engine, serverSide));
     }
   };
   this.applyCoinDelta = function(coinData)
   {
     for(var i = 0; i < coinData.add.length; i++)
     {
-      var dt = coinData.add[i];
-      coins.put(new Coin(dt.position.x, dt.position.y, dt.value, dt.id, engine, serverSide));
+      var c = this.uncompressCoin(coinData.add[i]);
+      coins.put(new Coin(c.x, c.y, c.val, c.id, engine, serverSide));
     }
     for(var i = 0; i < coinData.remove.length; i++)
     {
@@ -674,11 +709,31 @@ function GameState(serverSide)
   var MAX_VIS_WID = 2000;
   var MAX_VIS_HEI = 2000;
   
+  //only updates for the given player
+  this.getSelfUpdates = function(target)
+  {
+    if(!target.alive)
+    {
+      return {
+        "u": [],
+        "t": this.time()
+      };
+    }
+    var rtn = [];
+    rtn.push(target.getCData());
+    return {
+      "u": rtn,
+      "t": this.time()
+    };
+  };
   this.getUpdates = function(target)
   {
     if(!target.alive)
     {
-      return [];
+      return {
+        "u": [],
+        "t": this.time()
+      };
     }
     var bounds = target.getVisibility(MAX_VIS_WID, MAX_VIS_HEI, true);
     var rtn = [];
@@ -702,14 +757,14 @@ function GameState(serverSide)
     return {
       "id": d[0],
       "p":{
-        "x":d[1],
-        "y":d[2]
+        "x":int2float(d[1]),
+        "y":int2float(d[2])
       },
       "v":{
-        "x":d[3],
-        "y":d[4],
+        "x":int2float(d[3]),
+        "y":int2float(d[4]),
       },
-      "a":d[5],
+      "a":int2float(d[5]),
       "k":d[6],
       //"j":d[7],
       "c":d[7],
@@ -720,7 +775,7 @@ function GameState(serverSide)
   };
   
   //returns true if the server tried to correct the keys on our own player!
-  this.applyUpdates = function(updatesObj)
+  this.applyUpdates = function(updatesObj, removePlayers)
   {
     var rtn = false;
     var timestamp = updatesObj.t;
@@ -764,11 +819,14 @@ function GameState(serverSide)
       player.setJumpCount(u.jc);
       player.setNick(u.n);
     }
-    for(var i = 0; i < players.length; i++)
+    if(removePlayers || updates.length === 0)
     {
-      if(!playerIds[players[i].id])
+      for(var i = 0; i < players.length; i++)
       {
-        this.removePlayer(players[i].id);
+        if(!playerIds[players[i].id])
+        {
+          this.removePlayer(players[i].id);
+        }
       }
     }
     return rtn;
@@ -959,11 +1017,12 @@ function Coin(xx, yy, value, id, engine, serverSide)
   };
   this.getData = function()
   { 
-    var pl = {
-        "position": this.position,
-        "value":value,
-        "id":id
-      }
+    var pl = [
+        float2int(this.position.x),
+        float2int(this.position.y),
+        value,
+        id
+      ];
     return pl;
   };
   this.getBounds = function()
@@ -1057,7 +1116,7 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
   **/
   var botRecording = false;
   var nodes = [];
-  var NODE_X_THRESHOLD = 3000;
+  var NODE_X_THRESHOLD = 500;
   var NODE_Y_THRESHOLD = 5;
   this.startRecordBot = function(val)
   {
@@ -1089,7 +1148,15 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
   var lastKeys = null;
   this.serializeBot = function()
   {
-    return JSON.stringify(nodes);
+    var nn = [];
+    for(var i = 0; i < nodes.length; i++)
+    {
+      if(nodes[i].seqs.length > 0 && nodes[i].posl.length > 0)
+      {
+        nn.push(nodes[i]);
+      }
+    }
+    return JSON.stringify(nn);
   };
   this.recordBot = function()
   {
@@ -1302,17 +1369,18 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
       "y": roundDecimal(vct.y)
     };
   }
+
   
   this.getCData = function()
   {
     var u = this.getData();
     return [
       u.id,
-      u.p.x,
-      u.p.y,
-      u.v.x,
-      u.v.y,
-      u.a,
+      float2int(u.p.x),
+      float2int(u.p.y),
+      float2int(u.v.x),
+      float2int(u.v.y),
+      float2int(u.a),
       u.k,
       //u.j,
       u.c,
@@ -1328,8 +1396,8 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
         "id": player.id,
         "p": player.composite.position,
         //"angle": player.composite.angle,
-        "v": roundVector(player.composite.velocity),
-        "a": roundDecimal(player.composite.angularVelocity),
+        "v": (player.composite.velocity),
+        "a": (player.composite.angularVelocity),
         "k": gameState.compressKeys(keys),
         //"j": jumpStatus,
         "c": coins,
@@ -1667,6 +1735,16 @@ function Player(xx,yy,id,engine,serverSide,gameState,skin)
   {
     keys[""+keyMsg.k]=keyMsg.v;
   };
+}
+
+var FLOAT_CONST = 10000.0;
+function float2int(f)
+{
+  return Math.round(f*FLOAT_CONST);
+}
+function int2float(i)
+{
+  return i / FLOAT_CONST;
 }
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
