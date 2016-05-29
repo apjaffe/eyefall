@@ -167,7 +167,7 @@ Keys = {
         }
         
         // call our orientation event handler
-        var TILT_THRESHOLD = 8;
+        var TILT_THRESHOLD = 11;
         if(tilt > TILT_THRESHOLD)
         {
           Keys.directKeyEvent("39", true);
