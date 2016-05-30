@@ -1,5 +1,3 @@
-
-
 var gameState = new GameState(false);
 gameState.init();
 
